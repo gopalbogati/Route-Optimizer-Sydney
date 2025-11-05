@@ -43,12 +43,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (optimizedRoute && optimizedRoute.length > 1) {
-      const baseUrl = 'https://www.google.com/maps/dir/';
-      const addresses = optimizedRoute
-        .map(step => encodeURIComponent(step.address))
-        .join('/');
-        
-      setGoogleMapsUrl(`${baseUrl}${addresses}`);
+      const addresses = optimizedRoute.map(step => encodeURIComponent(step.address));
+      const url = `https://www.google.com/maps/dir/${addresses.join('/')}`;
+      setGoogleMapsUrl(url);
     } else {
       setGoogleMapsUrl(null);
     }
