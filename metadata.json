@@ -1,0 +1,7 @@
+{
+  "name": "Sydney Delivery Route Optimizer",
+  "description": "An application that takes a list of delivery addresses in Sydney and uses the Gemini API with Google Maps grounding to calculate the most efficient, shortest-distance route starting from a warehouse.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
