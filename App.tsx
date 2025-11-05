@@ -3,7 +3,7 @@ import { optimizeRoute } from './services/geminiService';
 import { GroundingChunk, ProcessedRouteStep, SavedRoute } from './types';
 import { 
   MapPinIcon, RouteIcon, WarehouseIcon, SparklesIcon, ExternalLinkIcon, ClockIcon, MapIcon, 
-  SaveIcon, HistoryIcon, TrashIcon, RecalculateIcon 
+  SaveIcon, HistoryIcon, TrashIcon, RecalculateIcon, RepeatIcon
 } from './components/icons';
 
 
@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [googleMapsUrl, setGoogleMapsUrl] = useState<string | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRoundTrip, setIsRoundTrip] = useState<boolean>(true);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -85,7 +86,7 @@ const App: React.FC = () => {
     setGoogleMapsUrl(null);
 
     try {
-      const result = await optimizeRoute(startAddress, addresses, userLocation);
+      const result = await optimizeRoute(startAddress, addresses, userLocation, isRoundTrip);
       
       let cumulativeTime = Date.now();
       const processedRoute = result.route.map(step => {
@@ -107,7 +108,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [deliveryAddresses, startAddress, userLocation]);
+  }, [deliveryAddresses, startAddress, userLocation, isRoundTrip]);
 
   const handleSaveRoute = () => {
     if (!optimizedRoute || !totalTravelTime) return;
@@ -120,6 +121,7 @@ const App: React.FC = () => {
       optimizedRoute,
       totalTravelTime,
       createdAt: new Date().toISOString(),
+      isRoundTrip,
     };
     
     const updatedRoutes = [...savedRoutes, newRoute];
@@ -133,6 +135,7 @@ const App: React.FC = () => {
     setDeliveryAddresses(routeToLoad.deliveryAddresses.join('\n'));
     setOptimizedRoute(routeToLoad.optimizedRoute);
     setTotalTravelTime(routeToLoad.totalTravelTime);
+    setIsRoundTrip(routeToLoad.isRoundTrip ?? true);
     setError(null);
     setGrounding([]);
     setIsModalOpen(false);
@@ -182,6 +185,24 @@ const App: React.FC = () => {
                 className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               />
             </div>
+
+            <div className="flex items-center justify-end -mt-2">
+                <label htmlFor="round-trip-toggle" className="inline-flex items-center cursor-pointer">
+                    <input 
+                    id="round-trip-toggle" 
+                    type="checkbox" 
+                    checked={isRoundTrip}
+                    onChange={(e) => setIsRoundTrip(e.target.checked)}
+                    className="sr-only peer"
+                    />
+                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300 flex items-center gap-2">
+                    <RepeatIcon className="w-5 h-5" />
+                    Return to Warehouse (Round Trip)
+                    </span>
+                </label>
+            </div>
+            
             <div>
               <label htmlFor="delivery-addresses" className="flex items-center text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 <MapPinIcon className="w-6 h-6 mr-2 text-gray-500" />
@@ -262,7 +283,7 @@ const App: React.FC = () => {
                   </span>
                   <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
                     <h3 className="flex items-center mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-                      {index === 0 ? <WarehouseIcon className="w-5 h-5 mr-2" /> : <MapPinIcon className="w-5 h-5 mr-2" />}
+                      {(index === 0 || (isRoundTrip && index === optimizedRoute.length - 1)) ? <WarehouseIcon className="w-5 h-5 mr-2" /> : <MapPinIcon className="w-5 h-5 mr-2" />}
                       {step.address}
                     </h3>
                     <p className="text-base font-normal text-gray-500 dark:text-gray-400">{step.instructions}</p>

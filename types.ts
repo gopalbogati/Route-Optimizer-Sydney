@@ -24,4 +24,5 @@ export interface SavedRoute {
   optimizedRoute: ProcessedRouteStep[];
   totalTravelTime: string;
   createdAt: string;
+  isRoundTrip: boolean;
 }

@@ -4,7 +4,8 @@ import { RouteStep } from '../types';
 export const optimizeRoute = async (
   startAddress: string,
   deliveryAddresses: string[],
-  userLocation: { latitude: number; longitude: number } | null
+  userLocation: { latitude: number; longitude: number } | null,
+  isRoundTrip: boolean
 ): Promise<{ route: RouteStep[]; groundingChunks: any[]; totalTravelTime: string }> => {
   if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable not set");
@@ -13,6 +14,10 @@ export const optimizeRoute = async (
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const addressList = deliveryAddresses.map((addr, index) => `${index + 1}. ${addr}`).join('\n');
+  
+  const finalStopInstruction = isRoundTrip
+    ? "The final stop should be back at the warehouse."
+    : "The final stop should be the last delivery address.";
 
   const prompt = `
     You are a logistics and route optimization expert for delivery services in Sydney, Australia.
@@ -22,7 +27,7 @@ export const optimizeRoute = async (
     Delivery Destinations:
     ${addressList}
 
-    Please provide the most optimal route as a sequence of stops. The route must start at the warehouse. The final stop should be the last delivery address.
+    Please provide the most optimal route as a sequence of stops. The route must start at the warehouse. ${finalStopInstruction}
 
     Return the result as a single JSON object with two keys: "route" and "totalTravelTime".
     - The "route" key should contain an array of objects, where each object represents a stop in the route and has the following structure:
